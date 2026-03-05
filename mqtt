@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Pico 2 Control Panel</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 10px; display: inline-block; shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #status { font-weight: bold; color: orange; }
+        #data { font-size: 2em; color: #007bff; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Monitor Pico 2 (Adafruit IO)</h2>
+        <p>Stato: <span id="status">Connessione in corso...</span></p>
+        <p>Ultimo valore ricevuto:</p>
+        <div id="data">---</div>
+        <br>
+        <button onclick="inviaComando()">Accendi LED</button>
+    </div>
+
+    <script>
+        // --- CONFIGURAZIONE ---
+        const USERNAME = "flyingale";
+        const ADDR_KEY = "aio_Tiya40FW2FUDdhQZpjeQ5LTnKdO4  ";
+    
+        const FEED_NAME = "flyingale/feeds/ale"; // Nome del tuo feed
+        
+        // URL per WebSockets di Adafruit (porta 443 per SSL)
+        const client = mqtt.connect(`wss://io.adafruit.com:443/mqtt`, {
+            username: USERNAME,
+            password: ADDR_KEY
+        });
+
+        const topic = `${USERNAME}/feeds/${FEED_NAME}`;
+
+        client.on('connect', () => {
+            document.getElementById('status').innerText = "Connesso!";
+            document.getElementById('status').style.color = "green";
+            // Ci iscriviamo al feed per ricevere i dati dal Pico 2
+            client.subscribe(topic);
+        });
+
+        // Quando arriva un messaggio dal broker
+        client.on('message', (t, message) => {
+            document.getElementById('data').innerText = message.toString();
+        });
+
+        // Funzione per inviare dati (es. premendo il bottone)
+        function inviaComando() {
+            const comando = "ON"; 
+            client.publish(topic, comando);
+            console.log("Inviato: " + comando);
+        }
+    </script>
+</body>
+</html>
